@@ -1,47 +1,51 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import Web3 from "web3";
 
 export default function App() {
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [web3, setWeb3] = useState(null);
+  const [account, setAccount] = useState(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wallet = params.get("wallet_address");
-    if (wallet) {
-      setWalletAddress(wallet);
-      window.history.replaceState({}, document.title, window.location.pathname);
+  const connectWallet = async () => {
+    try {
+      const walletConnectProvider = new WalletConnectProvider({
+        rpc: {
+          8453: "https://mainnet.base.org", // Base mainnet RPC
+        },
+        chainId: 8453,
+      });
+
+      await walletConnectProvider.enable();
+
+      const web3Instance = new Web3(walletConnectProvider);
+      setProvider(walletConnectProvider);
+      setWeb3(web3Instance);
+
+      const accounts = await web3Instance.eth.getAccounts();
+      setAccount(accounts[0]);
+
+      walletConnectProvider.on("disconnect", () => {
+        setAccount(null);
+        setProvider(null);
+        setWeb3(null);
+      });
+    } catch (error) {
+      console.error("Failed to connect wallet:", error);
     }
-  }, []);
-
-  function handleConnect() {
-    const redirectUri = encodeURIComponent(window.location.origin + "/");
-    const dynamicConnectUrl = `https://dynamic.xyz/connect?app=Yep&redirect_uri=${redirectUri}`;
-    window.location.href = dynamicConnectUrl;
-  }
-
-  function handleSignMessage() {
-    if (!walletAddress) {
-      alert("Please connect your wallet first!");
-      return;
-    }
-    const message = "I agree to sign this message in Yep Mini App";
-    const redirectUri = encodeURIComponent(window.location.origin + "/sign-callback");
-    const signUrl = `https://dynamic.xyz/sign?message=${encodeURIComponent(message)}&redirect_uri=${redirectUri}`;
-    window.location.href = signUrl;
-  }
+  };
 
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
-      <h2>Yep Mini App</h2>
-      {walletAddress ? (
-        <>
-          <p>Wallet connected: <b>{walletAddress}</b></p>
-          <button onClick={handleSignMessage} style={{ padding: "10px 15px", cursor: "pointer" }}>
-            Sign Message (example)
-          </button>
-        </>
+      <h2>Yep Mini App - WalletConnect (Base Chain)</h2>
+      {account ? (
+        <p>Connected wallet: <b>{account}</b></p>
       ) : (
-        <button onClick={handleConnect} style={{ padding: "10px 15px", cursor: "pointer" }}>
-          Connect Wallet via Dynamic.xyz
+        <button
+          onClick={connectWallet}
+          style={{ padding: "10px 15px", cursor: "pointer" }}
+        >
+          Connect Wallet with WalletConnect
         </button>
       )}
     </div>
