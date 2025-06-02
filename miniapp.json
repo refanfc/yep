@@ -1,0 +1,8 @@
+{
+  "name": "Yep Mini App",
+  "description": "Mini app for tipping $YEP token via Dynamic.xyz wallet",
+  "icon": "https://yep-rho.vercel.app/icon.png",
+  "url": "https://yep-rho.vercel.app/",
+  "permissions": ["wallet_connect", "sign_message"],
+  "version": "1.0.0"
+}
